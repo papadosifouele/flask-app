@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import trimesh
 import os
+import requests  # Needed to send data to n8n
 
 app = Flask(__name__)
 
@@ -8,9 +9,12 @@ UPLOAD_FOLDER = "uploads/"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Your n8n Webhook URL
+N8N_WEBHOOK_URL = "https://eleftheria.app.n8n.cloud/webhook-test/file-upload"
+
 @app.route('/')
 def home():
-    return render_template('index.html')  # Serves the HTML file for uploads
+    return render_template('index.html')  # Serves the HTML upload form
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -35,18 +39,23 @@ def upload_file():
         bounding_box = mesh.bounding_box.extents.tolist() if hasattr(mesh, 'bounding_box') else []
         centroid = mesh.centroid.tolist() if hasattr(mesh, 'centroid') else []
 
-        # Debug log (prints on Render logs)
+        # Debug log (prints in Render logs)
         print(f"LOD Level: {lod_result}")
+        print(f"Bounding Box: {bounding_box}")
 
-        # Return response as JSON
-        response = jsonify({
+        # Send JSON to n8n
+        json_payload = {
             "message": "File processed successfully",
             "bounding_box": bounding_box,
             "centroid": centroid,
             "lod": lod_result  # This is what n8n needs
-        })
-        response.headers["Content-Type"] = "application/json"
-        return response
+        }
+
+        # Forward JSON to n8n Webhook
+        response = requests.post(N8N_WEBHOOK_URL, json=json_payload)
+        print(f"Sent to n8n: {response.status_code}")
+
+        return jsonify(json_payload)  # Also return JSON to the user
 
     except Exception as e:
         print(f"Error processing file: {str(e)}")  # Log the error
