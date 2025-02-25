@@ -20,15 +20,24 @@ def upload_file():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
     file.save(file_path)
 
-    # Extract 3D model properties
+    # Load the 3D model
     mesh = trimesh.load(file_path)
+
+    # Check if the model has layers
+    has_layers = hasattr(mesh, 'metadata') and 'layers' in mesh.metadata and mesh.metadata['layers']
+
+    # Determine LOD
+    lod_result = "IT IS LOD 200" if has_layers else "IT IS LOD 100"
+
+    # Extract 3D model properties
     bounding_box = mesh.bounding_box.extents.tolist()
     centroid = mesh.centroid.tolist()
 
     return jsonify({
         "message": "File processed successfully",
         "bounding_box": bounding_box,
-        "centroid": centroid
+        "centroid": centroid,
+        "lod": lod_result  # Send LOD status
     })
 
 if __name__ == '__main__':
