@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import trimesh
 import os
 
@@ -10,7 +10,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
 def home():
-    return "Flask App is Running!"
+    return render_template('index.html')  # This serves the HTML file
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -33,4 +33,3 @@ def upload_file():
 
 if __name__ == '__main__':
     app.run(debug=True)
- 
